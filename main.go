@@ -11,9 +11,9 @@ import (
 	"github.com/cskr/pubsub"
 )
 
-const FirestoreEmulatorHost = "FIRESTORE_EMULATOR_HOST"
-const LoopbackIP = "127.0.0.1"
-const FirestoreStdoutTopic = "firetore-logs"
+const firestoreEmulatorHost = "FIRESTORE_EMULATOR_HOST"
+const loopbackIP = "127.0.0.1"
+const firestoreStdoutTopic = "firetore-logs"
 
 func getFirestoreEmulatorCmd(verbose bool, port uint16) *exec.Cmd {
 	var cmdArgs = []string{"beta", "emulators", "firestore", "start"}
@@ -25,18 +25,18 @@ func getFirestoreEmulatorCmd(verbose bool, port uint16) *exec.Cmd {
 		port = getFreeHostPort()
 	}
 
-	hostPort := fmt.Sprintf("--host-port=%s:%d", LoopbackIP, port)
+	hostPort := fmt.Sprintf("--host-port=%s:%d", loopbackIP, port)
 	cmdArgs = append(cmdArgs, hostPort)
 
 	return exec.Command("gcloud", cmdArgs...)
 }
 
 func setHostEnvIfIsConfigured(stdoutLine string) {
-	pos := strings.Index(stdoutLine, FirestoreEmulatorHost+"=")
+	pos := strings.Index(stdoutLine, firestoreEmulatorHost+"=")
 
 	if pos > 0 {
-		host := stdoutLine[pos+len(FirestoreEmulatorHost)+1:]
-		os.Setenv(FirestoreEmulatorHost, host)
+		host := stdoutLine[pos+len(firestoreEmulatorHost)+1:]
+		os.Setenv(firestoreEmulatorHost, host)
 	}
 }
 
@@ -47,7 +47,7 @@ func publishFirestoreLogs(firestoreStdout io.ReadCloser, firestorePubSub *pubsub
 	}
 
 	for line := range streamReadlinesIterator {
-		firestorePubSub.Pub(line, FirestoreStdoutTopic)
+		firestorePubSub.Pub(line, firestoreStdoutTopic)
 	}
 }
 
@@ -68,12 +68,12 @@ func firestoreEmulatorIsReady(stdoutLine string) bool {
 }
 
 func waitForFirestoreToBeReady(ps *pubsub.PubSub) {
-	channel := ps.Sub(FirestoreStdoutTopic)
+	channel := ps.Sub(firestoreStdoutTopic)
 	for {
 		if msg, ok := <-channel; ok {
 
 			if firestoreEmulatorIsReady(fmt.Sprintf("%s", msg)) {
-				go ps.Unsub(channel, FirestoreStdoutTopic)
+				go ps.Unsub(channel, firestoreStdoutTopic)
 			}
 
 			setHostEnvIfIsConfigured(fmt.Sprintf("%s", msg))
@@ -96,7 +96,7 @@ func (f *FirestoreEmulator) Start() {
 	f.cmd, f.stdout = startFirestoreEmulator(f.Verbose, f.Port)
 
 	go publishFirestoreLogs(f.stdout, f.pubSub)
-	go logPubSubTopic(f.pubSub, FirestoreStdoutTopic)
+	go logPubSubTopic(f.pubSub, firestoreStdoutTopic)
 	waitForFirestoreToBeReady(f.pubSub)
 }
 

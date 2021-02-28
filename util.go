@@ -2,11 +2,9 @@ package rfe
 
 import (
 	"bufio"
-	"context"
 	"io"
 	"log"
 	"os/exec"
-	"strconv"
 	"strings"
 	"syscall"
 
