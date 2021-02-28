@@ -77,5 +77,5 @@ func logPubSubTopic(ps *pubsub.PubSub, topicName string) {
 
 // Other
 func stringIsNotEmpty(str string) bool {
-	return strings.TrimSpace(str) == ""
+	return strings.TrimSpace(str) != ""
 }
