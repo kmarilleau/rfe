@@ -8,7 +8,6 @@ import (
 	"strings"
 	"syscall"
 
-	"cloud.google.com/go/firestore"
 	"github.com/cskr/pubsub"
 	"github.com/phayes/freeport"
 )
