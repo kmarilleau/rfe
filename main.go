@@ -31,13 +31,16 @@ func getFirestoreEmulatorCmd(verbose bool, port uint16) *exec.Cmd {
 	return exec.Command("gcloud", cmdArgs...)
 }
 
-func setHostEnvIfIsConfigured(stdoutLine string) {
-	pos := strings.Index(stdoutLine, firestoreEmulatorHost+"=")
+func startFirestoreEmulator(verbose bool, port uint16) (cmd *exec.Cmd, stdout io.ReadCloser) {
+	cmd = getFirestoreEmulatorCmd(verbose, port)
+	stdout = getBothStdoutStderrCombined(cmd)
 
-	if pos > 0 {
-		host := stdoutLine[pos+len(firestoreEmulatorHost)+1:]
-		os.Setenv(firestoreEmulatorHost, host)
+	makeProcessKillable(cmd)
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
 	}
+
+	return
 }
 
 func publishFirestoreLogs(firestoreStdout io.ReadCloser, firestorePubSub *pubsub.PubSub) {
@@ -51,20 +54,17 @@ func publishFirestoreLogs(firestoreStdout io.ReadCloser, firestorePubSub *pubsub
 	}
 }
 
-func startFirestoreEmulator(verbose bool, port uint16) (cmd *exec.Cmd, stdout io.ReadCloser) {
-	cmd = getFirestoreEmulatorCmd(verbose, port)
-	stdout = getBothStdoutStderrCombined(cmd)
-
-	makeProcessKillable(cmd)
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-
-	return
-}
-
 func firestoreEmulatorIsReady(stdoutLine string) bool {
 	return strings.Contains(stdoutLine, "Dev App Server is now running")
+}
+
+func setHostEnvIfIsConfigured(stdoutLine string) {
+	pos := strings.Index(stdoutLine, firestoreEmulatorHost+"=")
+
+	if pos > 0 {
+		host := stdoutLine[pos+len(firestoreEmulatorHost)+1:]
+		os.Setenv(firestoreEmulatorHost, host)
+	}
 }
 
 func waitForFirestoreToBeReady(ps *pubsub.PubSub) {
